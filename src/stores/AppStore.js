@@ -18,6 +18,9 @@ export const useAppStore = defineStore('app', () => {
     // Decode jwt payload
     // Calculate expiration datetime
     // Store session details in local storage
+    localStorage.setItem('token', 'u1');
+    localStorage.setItem('userId', 'Bearer');
+    localStorage.setItem('tokenExpiration', new Date().getTime() + (3600 * 1000));
     // Do something with refreshToken cookie?
     // Set deauth timer
     // Update state with session details

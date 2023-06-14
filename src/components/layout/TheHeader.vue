@@ -9,7 +9,7 @@
           <router-link to="/coaches">All Coaches</router-link>
         </li> -->
         <li v-if="isLoggedIn">
-          <router-link to="/requests">New Request</router-link>
+          <router-link to="/requests/submission">New Request</router-link>
         </li>
         <li v-else>
           <router-link to="/auth">Login</router-link>

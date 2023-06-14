@@ -138,6 +138,7 @@ export default {
       try {
         if (this.mode === 'login') {
           await this.appStore.login(actionPayload)
+          console.log(this.appStore.userId, this.appStore.token)
         } else {
           await this.appStore.signup(actionPayload)
         }
