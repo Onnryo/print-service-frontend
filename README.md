@@ -33,3 +33,12 @@ npm run build
 ```sh
 npm run lint
 ```
+
+## TODO
+- ~~User Auth~~
+    - https://medium.com/js-dojo/vue-js-form-validation-using-options-api-c5d9c2170b0b
+    - https://www.npmjs.com/package/vue3-google-login
+- Vue Router
+- Landing Page
+- API Connection
+- Request Creation
