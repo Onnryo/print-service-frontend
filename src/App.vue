@@ -21,13 +21,13 @@ export default {
   },
   computed: {
     ...mapStores(useAppStore),
-    didDeauth() {
-      return this.appStore.didDeauth
+    isAuth() {
+      return this.appStore.isAuthenticated
     }
   },
   watch: {
-    didDeauth(curValue, oldValue) {
-      if (curValue && curValue !== oldValue) {
+    isAuth(curValue, oldValue) {
+      if (!curValue && curValue !== oldValue) {
         this.$router.replace('/auth');
       }
     }

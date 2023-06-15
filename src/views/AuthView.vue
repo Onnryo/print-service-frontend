@@ -138,17 +138,24 @@ export default {
       try {
         if (this.mode === 'login') {
           await this.appStore.login(actionPayload)
-          console.log(this.appStore.userId, this.appStore.token)
+          const redirectUrl = '/' + (this.$route.query.redirect || '')
+          this.$router.replace(redirectUrl)
         } else {
           await this.appStore.signup(actionPayload)
+          this.clearForm()
+          this.switchAuthMode()
         }
-        const redirectUrl = '/' + (this.$route.query.redirect || '')
-        this.$router.replace(redirectUrl)
       } catch (err) {
         this.error = err.message || 'Failed to authenticate, try later.'
       }
 
       this.isLoading = false
+    },
+    clearForm() {
+      this.username = ''
+      this.email = ''
+      this.password = ''
+      this.repassword = ''
     },
     switchAuthMode() {
       if (this.mode === 'login') {
