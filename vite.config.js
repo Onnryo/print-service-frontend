@@ -3,6 +3,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import mkcert from 'vite-plugin-mkcert'
+import tailwindcss from 'tailwindcss';
 
 require('dotenv').config()
 
@@ -17,5 +18,10 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
+  },
+  css: {
+    postcss: {
+      plugins: [tailwindcss],
+    },
   }
 })

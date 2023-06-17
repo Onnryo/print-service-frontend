@@ -35,7 +35,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap");
 
 * {
@@ -44,6 +44,7 @@ export default {
 
 html {
   font-family: "Roboto", sans-serif;
+  background-color: #f8f8f8; /* Off-white background color */
 }
 
 body {

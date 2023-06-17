@@ -112,41 +112,46 @@ export const useAppStore = defineStore('app', () => {
     const res = await axios.get('https://localhost:4000/logout', { withCredentials: true })
   }
   async function reauth() {
-    clearTimeout(timer)
-    try {
+    return new Promise((resolve, reject) => {
+      clearTimeout(timer)
       // Attempt to reauth with refresh token
-      const res = await axios.get('https://localhost:4000/refresh', { withCredentials: true })
+      axios
+        .get('https://localhost:4000/refresh', { withCredentials: true })
+        .then((res) => {
+          const accessToken = res.data.accessToken
+          const decoded = VueJwtDecode.decode(accessToken)
+          const jwtid = decoded.id
+          const jwtusername = decoded.username
+          const jwtrole = decoded.role
+          const jwtexpiration = decoded.exp * 1000
 
-      const accessToken = res.data.accessToken
-      const decoded = VueJwtDecode.decode(accessToken)
-      const jwtid = decoded.id
-      const jwtusername = decoded.username
-      const jwtrole = decoded.role
-      const jwtexpiration = decoded.exp * 1000
+          // Store session details in local storage
+          localStorage.setItem('token', accessToken)
+          localStorage.setItem('userId', jwtid)
+          localStorage.setItem('username', jwtusername)
+          localStorage.setItem('tokenExpiration', jwtexpiration)
 
-      // Store session details in local storage
-      localStorage.setItem('token', accessToken)
-      localStorage.setItem('userId', jwtid)
-      localStorage.setItem('username', jwtusername)
-      localStorage.setItem('tokenExpiration', jwtexpiration)
+          // Set deauth timer
+          const expiresIn = +jwtexpiration - new Date().getTime()
+          timer = setTimeout(deauth, expiresIn)
 
-      // Set deauth timer
-      const expiresIn = +jwtexpiration - new Date().getTime()
-      timer = setTimeout(deauth, expiresIn)
-
-      // Update state with session details
-      didDeauth.value = false
-      didExpire.value = false
-      userId.value = jwtid
-      username.value = jwtusername
-      role.value = jwtrole
-      token.value = accessToken
-      console.log('Reauthed!')
-      return
-    } catch (err) {
-      didExpire.value = true
-      logout()
-    }
+          // Update state with session details
+          didDeauth.value = false
+          didExpire.value = false
+          userId.value = jwtid
+          username.value = jwtusername
+          role.value = jwtrole
+          token.value = accessToken
+          console.log('Reauthed!', userId.value)
+          resolve()
+        })
+        .catch((error) => {
+          console.log('Reauth Failed :(', error)
+          didExpire.value = true
+          logout()
+          reject()
+        })
+    })
   }
   function deauth() {
     didDeauth.value = true

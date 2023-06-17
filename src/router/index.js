@@ -5,6 +5,8 @@ import RequestListView from '../views/RequestListView.vue'
 import RequestDetailView from '../views/RequestDetailView.vue'
 import RequestSubmissionView from '../views/RequestSubmissionView.vue'
 import RequestCommentView from '../views/RequestCommentView.vue'
+import PartListView from '../views/PartListView.vue'
+import PartDetailView from '../views/PartDetailView.vue'
 import BatchListView from '../views/BatchListView.vue'
 import BatchDetailView from '../views/BatchDetailView.vue'
 import BatchBuilderView from '../views/BatchBuilderView.vue'
@@ -12,6 +14,30 @@ import UserListView from '../views/UserListView.vue'
 import UserDetailView from '../views/UserDetailView.vue'
 import AuthView from '../views/AuthView.vue'
 import NotFound from '../views/NotFoundView.vue'
+
+/* 
+No Auth:
+    /auth
+
+User Auth:
+    /                       User Landing Page
+    /requests               All requests submitted by logged in user, filterable
+    /requests/submission    Request Submission
+    /requests/:id           Request Details if request submitted by logged in user, comments, files, parts display
+    /user/:id               User Details / settings
+
+Admin Auth:
+    /                       Admin Landing Page
+    /requests               All Requests, filterable, defaults to only pending and in progress requests
+    /requests/:id           ""
+    /user/:id               Admin settings / Other user details
+    /requests/comments      All comments, filterable, read/unread, links to relevant entity
+    /parts                  All parts, filterable
+    /parts/:id              Part Details, comments, files
+    /batch                  All batches, filterable
+    /batch/:id              Batch details, comments, parts, files, requests display
+    /batch/builder          Batch builder, effeciently combine parts from multiples requests based on size, filament, print settings, etc
+ */
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -47,6 +73,18 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true }
     },
     {
+      path: '/parts',
+      name: 'parts',
+      component: PartListView,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+      path: '/parts/:id',
+      name: 'PartDetails',
+      component: PartDetailView,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
       path: '/batch',
       name: 'batches',
       component: BatchListView,
@@ -74,22 +112,29 @@ const router = createRouter({
       path: '/users/:id',
       name: 'userDetails',
       component: UserDetailView,
-      meta: { requiresAuth: true}
+      meta: { requiresAuth: true }
     },
     {
       path: '/auth',
       name: 'auth',
       component: AuthView,
-      meta: { requiresUnauth: true}
+      meta: { requiresUnauth: true }
     },
     { path: '/:notFound(.*)', component: NotFound }
   ]
 })
 
-router.beforeEach((to, _, next) => {
+router.beforeEach((to, from, next) => {
   const appStore = useAppStore()
   if (to.meta.requiresAuth && !appStore.isAuthenticated) {
-    next('/auth')
+    appStore
+      .reauth()
+      .then(() => {
+        next()
+      })
+      .catch(() => {
+        next('/auth')
+      })
   } else if (to.meta.requiresUnauth && appStore.isAuthenticated) {
     next('/')
   } else {
