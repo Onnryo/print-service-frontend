@@ -142,7 +142,7 @@ export const useAppStore = defineStore('app', () => {
           username.value = jwtusername
           role.value = jwtrole
           token.value = accessToken
-          console.log('Reauthed!', userId.value)
+          console.log('Reauthed!', userId.value, role.value)
           resolve()
         })
         .catch((error) => {
@@ -159,5 +159,5 @@ export const useAppStore = defineStore('app', () => {
     reauth()
   }
 
-  return { userId, token, didDeauth, isAuthenticated, login, signup, logout, reauth, deauth }
+  return { userId, username, token, role, didDeauth, isAuthenticated, login, signup, logout, reauth, deauth }
 })
