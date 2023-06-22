@@ -51,6 +51,12 @@
         <a :href="request.link" target="_blank">{{ request.link }}</a>
       </p>
 
+      <div class="file-buttons">
+    <base-button v-for="file in request.files" :key="file.id" @click="downloadFile(file.id)">
+      {{ file.name }}
+    </base-button>
+  </div>
+
       <hr class="request-divider" />
 
       <!-- Comments -->
@@ -89,6 +95,7 @@
 import { useRequestStore } from '../stores/RequestStore'
 import { useAppStore } from '../stores/AppStore'
 import { mapStores } from 'pinia'
+import axios from 'axios'
 
 export default {
   data() {
@@ -125,15 +132,41 @@ export default {
   },
   mounted() {
     // Scroll to the bottom of the comment list
-    this.scrollToBottom();
+    this.scrollToBottom()
   },
   watch: {
     'request.comments'(newComments) {
       // Scroll to the bottom of the comment list when new comments are added
-      this.scrollToBottom();
-    },
+      this.scrollToBottom()
+    }
   },
   methods: {
+    downloadFile(fileId) {
+      axios
+        .get(`https://localhost:4000/files/${fileId}/download`, {
+          responseType: 'blob', // Set the response type to 'blob' for file download
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${this.appStore.token}`
+          }
+        })
+        .then((response) => {
+          console.log(123, response)
+          const blob = new Blob([response.data])
+          const link = document.createElement('a')
+          const contentDisposition = response.headers['content-disposition']
+          const fileNameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)["']?/
+          const matches = fileNameRegex.exec(contentDisposition)
+          const fileName = matches && matches[1] ? matches[1] : 'download'
+          link.href = URL.createObjectURL(blob)
+          link.download = fileName.slice(1,-1) // Get the file name from the response header
+          link.click()
+        })
+        .catch((error) => {
+          console.error(error)
+          // Handle the error if necessary
+        })
+    },
     submitComment() {
       if (this.commentMessage) {
         console.log(this.commentMessage)
@@ -165,10 +198,10 @@ export default {
     scrollToBottom() {
       // Scroll to the bottom of the comment list
       this.$nextTick(() => {
-        const commentList = this.$refs.commentList;
-        commentList.scrollTop = commentList.scrollHeight;
-      });
-    },
+        const commentList = this.$refs.commentList
+        commentList.scrollTop = commentList.scrollHeight
+      })
+    }
   }
 }
 </script>
@@ -179,6 +212,17 @@ h1 {
   font-weight: bold;
   color: #333;
   text-align: center;
+}
+
+.file-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.file-buttons > base-button {
+  padding: 8px 16px;
 }
 
 .request-header {
@@ -272,39 +316,39 @@ h1 {
 }
 
 .request-comment-list {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 0 1em; /* Adjust padding as needed */
-    overflow-y: auto;
-    max-height: 300px; /* Adjust the max-height as needed */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0 1em; /* Adjust padding as needed */
+  overflow-y: auto;
+  max-height: 300px; /* Adjust the max-height as needed */
 
-    /* Media queries for scaling in portrait and landscape orientations */
-    @media (orientation: portrait) {
-      margin: 1em 0; /* Adjust margin as needed */
-    }
-
-    @media (orientation: landscape) {
-      margin: 1em 10%; /* Adjust margin as needed */
-    }
-
-    /* Custom scrollbar styles */
-    scrollbar-color: #ccc #f5f5f5; /* Adjust the colors as needed */
-    scrollbar-width: thin;
-
-    &::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background-color: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background-color: #ccc;
-      border-radius: 4px;
-    }
+  /* Media queries for scaling in portrait and landscape orientations */
+  @media (orientation: portrait) {
+    margin: 1em 0; /* Adjust margin as needed */
   }
+
+  @media (orientation: landscape) {
+    margin: 1em 10%; /* Adjust margin as needed */
+  }
+
+  /* Custom scrollbar styles */
+  scrollbar-color: #ccc #f5f5f5; /* Adjust the colors as needed */
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 4px;
+  }
+}
 
 .request-comment {
   display: inline-block;

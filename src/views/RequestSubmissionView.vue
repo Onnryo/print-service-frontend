@@ -82,7 +82,7 @@ export default {
   },
   methods: {
     async submitForm() {
-      console.log(this.appStore.userId)
+      console.log(this.files[0].file)
       this.isLoading = true
 
       const actionPayload = {

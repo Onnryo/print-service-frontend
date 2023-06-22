@@ -12,24 +12,47 @@ export const useRequestStore = defineStore('request', () => {
 
   async function createRequest(payload) {
     try {
-      console.log({
-        title: payload.title,
-        body: payload.body,
-        link: payload.link,
-        userId: appStore.userId,
-        token: appStore.token
+      const formData = new FormData()
+      formData.append('title', payload.title)
+      formData.append('body', payload.body)
+      formData.append('link', payload.link)
+      formData.append('userId', appStore.userId)
+
+      const res = await axios.post('https://localhost:4000/requests', formData, {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${appStore.token}`,
+          'Content-Type': 'multipart/form-data' // Important: Set the content type to 'multipart/form-data'
+        }
       })
-      const res = await axios.post(
-        'https://localhost:4000/requests',
+
+      if (res.status !== 200) {
+        throw new Error()
+      }
+
+      console.log(payload.files)
+      const requestId = res.data.id
+      const fileFormData = new FormData()
+
+      // Append each file to the FormData
+      payload.files.forEach((file, index) => {
+        console.log(file.file)
+        fileFormData.append(`files`, file.file)
+      })
+
+      const uploadRes = await axios.post(
+        `https://localhost:4000/files/${requestId}`,
+        fileFormData,
         {
-          title: payload.title,
-          body: payload.body,
-          link: payload.link,
-          userId: appStore.userId
-        },
-        { withCredentials: true, headers: { Authorization: `Bearer ${appStore.token}` } }
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${appStore.token}`,
+            'Content-Type': 'multipart/form-data' // Important: Set the content type to 'multipart/form-data'
+          }
+        }
       )
-      if (res.status != 200) {
+
+      if (uploadRes.status !== 200) {
         throw new Error()
       }
     } catch (err) {
@@ -49,7 +72,7 @@ export const useRequestStore = defineStore('request', () => {
           appStore.role === 'ADMIN'
             ? 'https://localhost:4000/requests'
             : 'https://localhost:4000/requests'
-            //: `https://localhost:4000/users/${appStore.userId}/requests`
+        //: `https://localhost:4000/users/${appStore.userId}/requests`
 
         const res = await axios.get(url, {
           withCredentials: true,
@@ -65,6 +88,7 @@ export const useRequestStore = defineStore('request', () => {
         requests.value = res.data
         requests.value.forEach((request) => {
           request.comments = []
+          request.files = []
         })
         resolve() // Resolve the promise
       } catch (err) {
@@ -77,6 +101,23 @@ export const useRequestStore = defineStore('request', () => {
   async function fetchComments(requestId) {
     try {
       const res = await axios.get(`https://localhost:4000/requests/${requestId}/comments`, {
+        withCredentials: true,
+        headers: { Authorization: `Bearer ${appStore.token}` }
+      })
+
+      if (res.status != 200) {
+        throw new Error()
+      }
+
+      return res.data
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async function fetchFiles(requestId) {
+    try {
+      const res = await axios.get(`https://localhost:4000/requests/${requestId}/files`, {
         withCredentials: true,
         headers: { Authorization: `Bearer ${appStore.token}` }
       })
@@ -106,8 +147,10 @@ export const useRequestStore = defineStore('request', () => {
     if (requestIndex !== -1) {
       try {
         const comments = await fetchComments(requestId)
+        const files = await fetchFiles(requestId)
         requests.value[requestIndex].comments = comments
-        console.log(123, requests.value[requestIndex])
+        requests.value[requestIndex].files = files
+        console.log(requests.value[requestIndex])
       } catch (error) {
         console.log(error)
         throw error
