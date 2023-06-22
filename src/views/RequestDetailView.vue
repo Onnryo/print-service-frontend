@@ -1,15 +1,15 @@
 <template>
   <base-card>
     <div class="request-details" v-if="request">
+      <!-- Request Header -->
       <div class="request-header">
         <h1>{{ request.title }}</h1>
         <p class="request-user-id">{{ request.userId }}</p>
       </div>
+
       <hr class="request-divider" />
-      <div class="request-body">{{ request.body }}</div>
-      <p class="request-link">
-        <a :href="request.link" target="_blank">{{ request.link }}</a>
-      </p>
+
+      <!-- Request Metadata -->
       <div class="request-metadata">
         <div class="request-metadata-group">
           <p class="request-property">Estimated Cost:</p>
@@ -40,14 +40,54 @@
           <p class="request-value">{{ request.updatedAt }}</p>
         </div>
       </div>
+
+      <hr class="request-divider" />
+
+      <!-- Request Body -->
+      <div class="request-body">{{ request.body }}</div>
+
+      <!-- Request Link -->
+      <p class="request-link">
+        <a :href="request.link" target="_blank">{{ request.link }}</a>
+      </p>
+
+      <hr class="request-divider" />
+
+      <!-- Comments -->
+      <p v-if="!request.comments.length">No Comments...</p>
+      <div v-else class="request-comment-list" ref="commentList">
+        <p
+          v-for="(comment, index) in request.comments"
+          :key="getCommentKey(comment, index)"
+          class="request-comment"
+          :class="{
+            'comment-received': comment.userId !== appStore.userId,
+            'comment-sent': comment.userId === appStore.userId
+          }"
+        >
+          {{ comment.text }}
+        </p>
+      </div>
+
+      <!-- Comment Form -->
+      <form class="comment-form" @submit.prevent="submitComment">
+        <div class="form-group">
+          <input
+            type="text"
+            class="comment-input"
+            placeholder="New Comment..."
+            v-model.trim="commentMessage"
+          />
+          <button type="submit" class="comment-submit">Send</button>
+        </div>
+      </form>
     </div>
-    <base-spinner v-if="isLoading"></base-spinner>
-    <p v-if="!request">{{ messageContents }}</p>
   </base-card>
 </template>
 
 <script>
 import { useRequestStore } from '../stores/RequestStore'
+import { useAppStore } from '../stores/AppStore'
 import { mapStores } from 'pinia'
 
 export default {
@@ -55,10 +95,12 @@ export default {
     return {
       isLoading: false,
       errorMessage: '',
+      commentMessage: '',
       request: null
     }
   },
   created() {
+    // Fetch request data
     this.isLoading = true
     this.requestStore
       .requestById(this.$route.params.id)
@@ -66,6 +108,7 @@ export default {
         this.request = req
         this.errorMessage = ''
         this.isLoading = false
+        console.log(this.request)
       })
       .catch((error) => {
         this.errorMessage = !error || error === '' ? new Error('Failed to fetch request') : error
@@ -75,9 +118,57 @@ export default {
   },
   computed: {
     ...mapStores(useRequestStore),
+    ...mapStores(useAppStore),
     messageContents() {
       return this.errorMessage ? this.errorMessage : 'Could not load request.'
     }
+  },
+  mounted() {
+    // Scroll to the bottom of the comment list
+    this.scrollToBottom();
+  },
+  watch: {
+    'request.comments'(newComments) {
+      // Scroll to the bottom of the comment list when new comments are added
+      this.scrollToBottom();
+    },
+  },
+  methods: {
+    submitComment() {
+      if (this.commentMessage) {
+        console.log(this.commentMessage)
+
+        // Create new comment
+        const payload = {
+          text: this.commentMessage,
+          requestId: Number(this.$route.params.id)
+        }
+        this.requestStore.createComment(payload)
+
+        // Scroll to the bottom of the comment list and clear the input
+        this.scrollToBottom()
+        this.commentMessage = null
+      }
+    },
+    getCommentKey(comment, index) {
+      return comment.id !== null ? comment.id : `temp-${index}`
+    },
+    getCommentBackgroundColor(comment) {
+      console.log(comment.userId)
+      if (!comment) return 'lightgrey'
+      if (comment.userId === this.appStore.userId) {
+        return 'lightblue'
+      } else {
+        return 'lightgrey'
+      }
+    },
+    scrollToBottom() {
+      // Scroll to the bottom of the comment list
+      this.$nextTick(() => {
+        const commentList = this.$refs.commentList;
+        commentList.scrollTop = commentList.scrollHeight;
+      });
+    },
   }
 }
 </script>
@@ -127,11 +218,14 @@ h1 {
 
 .request-metadata-group {
   display: flex;
+  width: 15em;
+  flex-direction: column; /* Updated: Change flex-direction to column */
 }
 
 .request-property {
   font-weight: bold;
   margin-right: 5px;
+  align-self: flex-start;
 }
 
 .request-value {
@@ -147,6 +241,88 @@ h1 {
   margin-top: 20px;
   margin-bottom: 20px;
   border: 1px solid #ccc;
+}
+
+.comment-form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.comment-input {
+  flex-grow: 1;
+  /* Apply the desired styling for the input field */
+  /* For example: */
+  border: 1px solid #e4e4e4;
+  padding: 0.5em;
+  margin-right: 10px;
+  border-radius: 25px;
+}
+
+.comment-submit {
+  /* Apply the desired styling for the submit button */
+  /* For example: */
+  border: none;
+  background-color: #0366d6;
+  color: white;
+  padding: 0.5em 1em;
+  border-radius: 25px;
+  cursor: pointer;
+}
+
+.request-comment-list {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0 1em; /* Adjust padding as needed */
+    overflow-y: auto;
+    max-height: 300px; /* Adjust the max-height as needed */
+
+    /* Media queries for scaling in portrait and landscape orientations */
+    @media (orientation: portrait) {
+      margin: 1em 0; /* Adjust margin as needed */
+    }
+
+    @media (orientation: landscape) {
+      margin: 1em 10%; /* Adjust margin as needed */
+    }
+
+    /* Custom scrollbar styles */
+    scrollbar-color: #ccc #f5f5f5; /* Adjust the colors as needed */
+    scrollbar-width: thin;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background-color: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: #ccc;
+      border-radius: 4px;
+    }
+  }
+
+.request-comment {
+  display: inline-block;
+  padding: 8px 16px;
+  margin: 8px;
+  border-radius: 20px;
+  max-width: 70%;
+}
+
+.comment-sent {
+  background-color: #248bf5;
+  color: white;
+  align-self: flex-end;
+}
+
+.comment-received {
+  background-color: #e5e5ea;
+  align-self: flex-start;
 }
 
 /* Add more styles as needed */
