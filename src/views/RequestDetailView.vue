@@ -52,10 +52,14 @@
       </p>
 
       <div class="file-buttons">
-    <base-button v-for="file in request.files" :key="file.id" @click="downloadFile(file.id)">
-      {{ file.name }}
-    </base-button>
-  </div>
+        <base-button
+          v-for="file in request.files"
+          :key="file.id"
+          @click="handleClick(file.id, $event)"
+        >
+          {{ file.name }}
+        </base-button>
+      </div>
 
       <hr class="request-divider" />
 
@@ -141,6 +145,17 @@ export default {
     }
   },
   methods: {
+    handleClick(id, event) {
+      if (this.appStore.role == 'ADMIN') {
+        if (event.shiftKey) {
+          this.downloadFile(id)
+        } else {
+          this.$router.push('/files/' + id)
+        }
+      } else {
+        this.downloadFile(id)
+      }
+    },
     downloadFile(fileId) {
       axios
         .get(`https://localhost:4000/files/${fileId}/download`, {
@@ -159,7 +174,7 @@ export default {
           const matches = fileNameRegex.exec(contentDisposition)
           const fileName = matches && matches[1] ? matches[1] : 'download'
           link.href = URL.createObjectURL(blob)
-          link.download = fileName.slice(1,-1) // Get the file name from the response header
+          link.download = fileName.slice(1, -1) // Get the file name from the response header
           link.click()
         })
         .catch((error) => {

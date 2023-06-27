@@ -10,6 +10,8 @@ import PartDetailView from '../views/PartDetailView.vue'
 import BatchListView from '../views/BatchListView.vue'
 import BatchDetailView from '../views/BatchDetailView.vue'
 import BatchBuilderView from '../views/BatchBuilderView.vue'
+import FileListView from '../views/FileListView.vue'
+import FileDetailView from '../views/FileDetailView.vue'
 import UserListView from '../views/UserListView.vue'
 import UserDetailView from '../views/UserDetailView.vue'
 import AuthView from '../views/AuthView.vue'
@@ -37,6 +39,8 @@ Admin Auth:
     /batch                  All batches, filterable
     /batch/:id              Batch details, comments, parts, files, requests display
     /batch/builder          Batch builder, effeciently combine parts from multiples requests based on size, filament, print settings, etc
+    /file                   All files, filterable, unassigned
+    /file/:id               File Details, Part Creator
  */
 
 const router = createRouter({
@@ -100,6 +104,18 @@ const router = createRouter({
       path: '/batch/builder',
       name: 'batchBuilder',
       component: BatchBuilderView,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+      path: '/files',
+      name: 'files',
+      component: FileListView,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+      path: '/files/:id',
+      name: 'fileDetails',
+      component: FileDetailView,
       meta: { requiresAuth: true, requiresAdmin: true }
     },
     {

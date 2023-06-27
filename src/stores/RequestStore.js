@@ -2,9 +2,11 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import axios from 'axios'
 import { useAppStore } from './AppStore'
+import { useFileStore } from './FileStore'
 
 export const useRequestStore = defineStore('request', () => {
   const appStore = useAppStore()
+  const fileStore = useFileStore()
   const requests = ref([])
   const status = ref(['Pending', 'In Progress', 'Complete', 'Canceled'])
 
@@ -30,31 +32,8 @@ export const useRequestStore = defineStore('request', () => {
         throw new Error()
       }
 
-      console.log(payload.files)
-      const requestId = res.data.id
-      const fileFormData = new FormData()
-
-      // Append each file to the FormData
-      payload.files.forEach((file, index) => {
-        console.log(file.file)
-        fileFormData.append(`files`, file.file)
-      })
-
-      const uploadRes = await axios.post(
-        `https://localhost:4000/files/${requestId}`,
-        fileFormData,
-        {
-          withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${appStore.token}`,
-            'Content-Type': 'multipart/form-data' // Important: Set the content type to 'multipart/form-data'
-          }
-        }
-      )
-
-      if (uploadRes.status !== 200) {
-        throw new Error()
-      }
+      payload.requestId = res.data.id
+      fileStore.createfile(payload)
     } catch (err) {
       console.log(err)
       const error = new Error(err || 'Failed to submit request.')
@@ -71,8 +50,7 @@ export const useRequestStore = defineStore('request', () => {
         const url =
           appStore.role === 'ADMIN'
             ? 'https://localhost:4000/requests'
-            : 'https://localhost:4000/requests'
-        //: `https://localhost:4000/users/${appStore.userId}/requests`
+            : `https://localhost:4000/users/${appStore.userId}/requests`
 
         const res = await axios.get(url, {
           withCredentials: true,

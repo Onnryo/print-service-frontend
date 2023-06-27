@@ -34,13 +34,13 @@
 </template>
 
 <script>
+import { useAppStore } from '../stores/AppStore'
 import { useRequestStore } from '../stores/RequestStore'
 import { mapStores } from 'pinia'
 
 export default {
   data() {
     return {
-      isAdmin: false,
       isLoading: false,
       errorMessage: '',
       filterText: '',
@@ -62,7 +62,11 @@ export default {
       })
   },
   computed: {
+    ...mapStores(useAppStore),
     ...mapStores(useRequestStore),
+    isAdmin() {
+      return this.appStore.role === 'ADMIN'
+    },
     filteredRequests() {
       const filterTextLower = this.filterText.toLowerCase();
       const filterStatusLower = this.filterStatus.toLowerCase();
