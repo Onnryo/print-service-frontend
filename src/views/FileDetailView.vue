@@ -1,7 +1,9 @@
 <template>
   <base-card>
+    <template v-slot:title>
+      <h2 class="card-title-text">File Details</h2>
+    </template>
     <div class="file-details" v-if="file">
-      <!-- File Header -->
       <div class="file-header">
         <h1>{{ file.name }}</h1>
         <div class="file-header-button-list">
@@ -10,10 +12,7 @@
           <base-button @click="downloadFile">Download</base-button>
         </div>
       </div>
-
       <hr class="file-divider" />
-
-      <!-- File Metadata -->
       <div class="file-metadata">
         <div class="file-metadata-group">
           <p class="file-property">Created At:</p>
@@ -66,19 +65,7 @@ export default {
     }
   },
   created() {
-    // Fetch file data
-    this.isLoading = true
-    this.fileStore
-      .fileById(this.$route.params.id)
-      .then((req) => {
-        this.file = req
-        this.errorMessage = ''
-        this.isLoading = false
-      })
-      .catch((error) => {
-        this.errorMessage = !error || error === '' ? new Error('Failed to fetch file') : error
-        this.isLoading = false
-      })
+    this.fetchFileDetails()
   },
   computed: {
     ...mapStores(useFileStore),
@@ -88,6 +75,17 @@ export default {
     }
   },
   methods: {
+    async fetchFileDetails() {
+      try {
+        this.isLoading = true
+        this.file = await this.fileStore.fileById(this.$route.params.id)
+        this.errorMessage = ''
+      } catch (error) {
+        this.errorMessage = error || new Error('Failed to fetch file')
+      } finally {
+        this.isLoading = false
+      }
+    },
     showRequest() {
       this.$router.push('/requests/' + this.file.requestId)
     },
@@ -95,9 +93,10 @@ export default {
       this.$router.push('/files/' + this.file.id + '/builder')
     },
     downloadFile() {
+      const url = `https://localhost:4000/files/${this.file.id}/download`
       axios
-        .get(`https://localhost:4000/files/${this.file.id}/download`, {
-          responseType: 'blob', // Set the response type to 'blob' for file download
+        .get(url, {
+          responseType: 'blob',
           withCredentials: true,
           headers: {
             Authorization: `Bearer ${this.appStore.token}`
@@ -111,7 +110,7 @@ export default {
           const matches = fileNameRegex.exec(contentDisposition)
           const fileName = matches && matches[1] ? matches[1] : 'download'
           link.href = URL.createObjectURL(blob)
-          link.download = fileName.slice(1, -1) // Get the file name from the response header
+          link.download = fileName.slice(1, -1)
           link.click()
         })
         .catch((error) => {
@@ -126,8 +125,8 @@ export default {
         return text.substr(0, length) + '...'
       }
     },
-    showPartDetails(requestId) {
-      this.$router.push(`/parts/${requestId}`)
+    showPartDetails(partId) {
+      this.$router.push(`/parts/${partId}`)
     }
   }
 }

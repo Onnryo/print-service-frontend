@@ -86,7 +86,14 @@ export default {
   computed: {
     ...mapStores(usePartStore),
     ...mapStores(useFileStore),
-    ...mapStores(useAppStore)
+    ...mapStores(useAppStore),
+    eta() {
+      let eta = null
+      if (!!this.hours && !!this.minutes) eta = this.hours + ':' + this.minutes
+      else if (!!this.hours && !this.minutes) eta = this.hours + ':00'
+      else if (!this.hours && !!this.minutes) eta = '00:' + this.minutes
+      return eta
+    }
   },
   created() {
     this.isLoading = true
@@ -111,23 +118,19 @@ export default {
   methods: {
     async submitForm() {
       this.isLoading = true
-      let eta = null
-      if (!!this.hours && !!this.minutes) eta = this.hours + ':' + this.minutes
-      else if (!!this.hours && !this.minutes) eta = this.hours + ':00'
-      else if (!this.hours && !!this.minutes) eta = '00:' + this.minutes
 
       const actionPayload = {
         title: this.title,
         notes: this.notes,
         cost: this.cost,
-        eta: eta,
+        eta: this.eta,
         quantity: this.quantity,
         file: this.file
       }
 
       try {
         await this.partStore.createPart(actionPayload)
-        const redirectUrl = '/' + (this.$route.query.redirect || 'files/' + this.$route.params.id)
+        const redirectUrl = `/${this.$route.query.redirect || 'files/' + this.$route.params.id}`
         this.$router.replace(redirectUrl)
       } catch (err) {
         this.error = err.message || 'Failed to create part.'

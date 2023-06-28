@@ -9,13 +9,12 @@ export const useFileStore = defineStore('file', () => {
 
   const isEmpty = computed(() => !files.value.length)
 
-  async function createfile(payload) {
+  async function createFile(payload) {
     try {
       const fileFormData = new FormData()
 
       // Append each file to the FormData
       payload.files.forEach((file) => {
-        console.log(file.file)
         fileFormData.append(`files`, file.file)
       })
 
@@ -41,48 +40,42 @@ export const useFileStore = defineStore('file', () => {
     }
   }
 
-  async function removefile(payload) {}
+  async function removeFile(payload) {
+    // Implement the logic to remove a file
+  }
 
-  function fetchfiles() {
+  async function fetchFiles() {
     files.value = []
-    return new Promise(async (resolve, reject) => {
-      try {
-        if (appStore.role !== 'ADMIN') {
-          reject(new Error('Unauthorized'))
-        }
-        const url = 'https://localhost:4000/files'
+    try {
+      const url = 'https://localhost:4000/files'
 
-        const res = await axios.get(url, {
-          withCredentials: true,
-          headers: { Authorization: `Bearer ${appStore.token}` }
-        })
+      const res = await axios.get(url, {
+        withCredentials: true,
+        headers: { Authorization: `Bearer ${appStore.token}` }
+      })
 
-        if (res.status !== 200) {
-          throw new Error()
-        }
-        console.log(res.data)
-
-        files.value = res.data
-        files.value.forEach((file) => {
-          file.parts = []
-        })
-        resolve() // Resolve the promise
-      } catch (err) {
-        console.log(err)
-        reject(new Error(err || 'Failed to fetch files.')) // Reject the promise
+      if (res.status !== 200) {
+        throw new Error()
       }
-    })
+
+      files.value = res.data
+      files.value.forEach((file) => {
+        file.parts = []
+      })
+    } catch (err) {
+      console.log(err)
+      throw new Error(err || 'Failed to fetch files.')
+    }
   }
 
   async function fetchParts(fileId) {
     try {
-      console.log(999)
       const res = await axios.get(`https://localhost:4000/files/${fileId}/parts`, {
         withCredentials: true,
         headers: { Authorization: `Bearer ${appStore.token}` }
       })
-      console.log(1000)
-      if (res.status != 200) {
+
+      if (res.status !== 200) {
         throw new Error()
       }
 
@@ -94,25 +87,16 @@ export const useFileStore = defineStore('file', () => {
   }
 
   async function fileById(fileId) {
-    console.log(fileId)
     if (!files.value.length) {
-      try {
-        await fetchfiles()
-      } catch (error) {
-        console.log(error)
-        throw error
-      }
+      await fetchFiles()
     }
 
     const fileIndex = files.value.findIndex((file) => file.id === Number(fileId))
-    console.log(files.value)
 
     if (fileIndex !== -1) {
       try {
         const parts = await fetchParts(fileId)
-        console.log(parts)
         files.value[fileIndex].parts = parts
-        console.log(files.value[fileIndex].parts)
       } catch (error) {
         console.log(error)
         throw error
@@ -120,16 +104,16 @@ export const useFileStore = defineStore('file', () => {
 
       return files.value[fileIndex]
     } else {
-      throw new Error('Unauthorized.')
+      throw new Error('File not found.')
     }
   }
 
   return {
     files,
     isEmpty,
-    createfile,
-    removefile,
-    fetchfiles,
+    createFile,
+    removeFile,
+    fetchFiles,
     fileById
   }
 })

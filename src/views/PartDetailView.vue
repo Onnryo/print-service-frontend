@@ -1,7 +1,9 @@
 <template>
   <base-card>
+    <template v-slot:title>
+      <h2 class="card-title-text">Part Details</h2>
+    </template>
     <div class="part-details" v-if="part">
-      <!-- Part Header -->
       <div class="part-header">
         <h1>{{ part.quantity }}x {{ part.title }}</h1>
         <div class="part-header-button-list">
@@ -9,10 +11,7 @@
           <base-button @click="showRequest">Request</base-button>
         </div>
       </div>
-
       <hr class="part-divider" />
-
-      <!-- Part Metadata -->
       <div class="part-metadata">
         <div class="part-metadata-group">
           <p class="part-property">Estimated Cost:</p>
@@ -64,19 +63,7 @@ export default {
     }
   },
   created() {
-    // Fetch part data
-    this.isLoading = true
-    this.partStore
-      .partById(this.$route.params.id)
-      .then((req) => {
-        this.part = req
-        this.errorMessage = ''
-        this.isLoading = false
-      })
-      .catch((error) => {
-        this.errorMessage = !error || error === '' ? new Error('Failed to fetch part') : error
-        this.isLoading = false
-      })
+    this.fetchPartDetails()
   },
   computed: {
     ...mapStores(usePartStore),
@@ -86,6 +73,17 @@ export default {
     }
   },
   methods: {
+    async fetchPartDetails() {
+      try {
+        this.isLoading = true
+        this.part = await this.partStore.partById(this.$route.params.id)
+        this.errorMessage = ''
+      } catch (error) {
+        this.errorMessage = error || new Error('Failed to fetch part')
+      } finally {
+        this.isLoading = false
+      }
+    },
     showFile() {
       this.$router.push('/files/' + this.part.fileId)
     },
@@ -99,8 +97,8 @@ export default {
         return text.substr(0, length) + '...'
       }
     },
-    showPartDetails(requestId) {
-      this.$router.push(`/parts/${requestId}`)
+    showPartDetails(partId) {
+      this.$router.push(`/parts/${partId}`)
     }
   }
 }

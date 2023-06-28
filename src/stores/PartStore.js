@@ -14,12 +14,11 @@ export const usePartStore = defineStore('part', () => {
 
   async function createPart(payload) {
     try {
-      console.log(payload)
       const formData = new FormData()
       formData.append('title', payload.title)
-      if (!!payload.notes) formData.append('notes', payload.notes)
-      if (!!payload.cost) formData.append('cost', payload.cost)
-      if (!!payload.eta) formData.append('eta', payload.eta)
+      if (payload.notes) formData.append('notes', payload.notes)
+      if (payload.cost) formData.append('cost', payload.cost)
+      if (payload.eta) formData.append('eta', payload.eta)
       formData.append('quantity', payload.quantity)
       formData.append('fileId', payload.file.id)
       formData.append('requestId', payload.file.requestId)
@@ -28,7 +27,7 @@ export const usePartStore = defineStore('part', () => {
         withCredentials: true,
         headers: {
           Authorization: `Bearer ${appStore.token}`,
-          'Content-Type': 'multipart/form-data' // Important: Set the content type to 'multipart/form-data'
+          'Content-Type': 'multipart/form-data'
         }
       })
 
@@ -42,50 +41,39 @@ export const usePartStore = defineStore('part', () => {
     }
   }
 
-  async function removePart(payload) {}
+  async function removePart(payload) {
+    // Implement the logic to remove a part
+  }
 
-  function fetchParts() {
-    parts.value = []
-    return new Promise(async (resolve, reject) => {
-      try {
-        const url = 'https://localhost:4000/parts'
+  async function fetchParts() {
+    try {
+      const url = 'https://localhost:4000/parts'
 
-        const res = await axios.get(url, {
-          withCredentials: true,
-          headers: { Authorization: `Bearer ${appStore.token}` }
-        })
+      const res = await axios.get(url, {
+        withCredentials: true,
+        headers: { Authorization: `Bearer ${appStore.token}` }
+      })
 
-        if (res.status !== 200) {
-          throw new Error()
-        }
-
-        //console.log(res.data)
-
-        parts.value = res.data
-        resolve() // Resolve the promise
-      } catch (err) {
-        console.log(err)
-        reject(new Error(err || 'Failed to fetch parts.')) // Reject the promise
+      if (res.status !== 200) {
+        throw new Error()
       }
-    })
+
+      parts.value = res.data
+    } catch (err) {
+      console.log(err)
+      throw new Error(err || 'Failed to fetch parts.')
+    }
   }
 
   async function partById(partId) {
     if (!parts.value.length) {
-      try {
-        await fetchParts()
-      } catch (error) {
-        console.log(error)
-        throw error
-      }
+      await fetchParts()
     }
-
-    const partIndex = parts.value.findIndex((part) => part.id === Number(partId))
-
-    if (partIndex !== -1) {
-      return parts.value[partIndex]
+    const part = parts.value.find((part) => part.id === parseInt(partId))
+    if (part) {
+      return part
     } else {
-      throw new Error('Unauthorized.')
+      throw new Error('Part not found.')
     }
   }
 

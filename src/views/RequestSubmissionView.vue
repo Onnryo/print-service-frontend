@@ -82,7 +82,6 @@ export default {
   },
   methods: {
     async submitForm() {
-      console.log(this.files[0].file)
       this.isLoading = true
 
       const actionPayload = {
@@ -93,9 +92,9 @@ export default {
       }
 
       try {
-          await this.requestStore.createRequest(actionPayload)
-          const redirectUrl = '/' + (this.$route.query.redirect || '')
-          this.$router.replace(redirectUrl)
+        await this.requestStore.createRequest(actionPayload)
+        const redirectUrl = '/' + (this.$route.query.redirect || '')
+        this.$router.replace(redirectUrl)
       } catch (err) {
         this.error = err.message || 'Failed to submit request.'
       }

@@ -10,19 +10,19 @@
       <form @submit.prevent="submitForm">
         <div class="form-control">
           <label for="username">Username</label>
-          <input type="text" id="username" v-model.trim="username" />
+          <FormKit type="text" id="username" v-model.trim="username" />
         </div>
-        <div class="form-control" v-if="isEmailVisible">
+        <div class="form-control" v-show="isEmailVisible">
           <label for="email">E-Mail</label>
-          <input type="email" id="email" v-model.trim="email" />
+          <FormKit type="email" id="email" v-model.trim="email" />
         </div>
         <div class="form-control">
           <label for="password">Password</label>
-          <input type="password" id="password" v-model.trim="password" />
+          <FormKit type="password" id="password" v-model.trim="password" />
         </div>
-        <div class="form-control" v-if="isRepassVisible">
+        <div class="form-control" v-show="isRepassVisible">
           <label for="repassword">Re-enter Password</label>
-          <input type="password" id="repassword" v-model.trim="repassword" />
+          <FormKit type="password" id="repassword" v-model.trim="repassword" />
         </div>
         <p v-if="!formIsValid">{{ formInvalidMessage }}</p>
         <base-button>{{ submitButtonCaption }}</base-button>
@@ -61,18 +61,25 @@ export default {
       return this.mode === 'signup'
     },
     submitButtonCaption() {
-      if (this.mode === 'login') {
-        return 'Login'
-      } else {
-        return 'Signup'
-      }
+      return this.mode === 'login' ? 'Login' : 'Signup'
     },
     switchModeButtonCaption() {
-      if (this.mode === 'login') {
-        return 'Signup instead'
-      } else {
-        return 'Login instead'
-      }
+      return this.mode === 'login' ? 'Signup instead' : 'Login instead'
+    },
+    isUsernameValid() {
+      const usernameRegex = new RegExp(/.{5,}$/, 'gm')
+      return usernameRegex.test(this.username)
+    },
+    isValidEmail() {
+      const emailRegex = new RegExp(/^[A-Za-z0-9_!#$%&'*+\/=?`{|}~^.-]+@[A-Za-z0-9.-]+$/, 'gm')
+      return emailRegex.test(this.email)
+    },
+    isValidPassword() {
+      const passwordRegex = new RegExp(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[~!@#$%^&*()_+{}|\\"',./<>?[\]:;`=-])[A-Za-z\d~!@#$%^&*()_+{}|\\"',./<>?[\]:;`=-]{8,}$/,
+        'gm'
+      )
+      return passwordRegex.test(this.password)
     }
   },
   methods: {
@@ -80,51 +87,39 @@ export default {
       this.formIsValid = true
       this.formInvalidMessage = ''
 
-      // TODO: On blur of username input, send request to db to check if username is available and display invalid if not
+      const isLoginMode = this.mode === 'login'
+      const isSignupMode = this.mode === 'signup'
+      const isForgotPassMode = this.mode === 'forgotPass'
 
-      const usernameRegex = new RegExp(/.{5,}$/, 'gm')
-      const isUsernameValid = usernameRegex.test(this.username)
-      const emailRegex = new RegExp(/^[A-Za-z0-9_!#$%&'*+\/=?`{|}~^.-]+@[A-Za-z0-9.-]+$/, 'gm')
-      const isValidEmail = emailRegex.test(this.email)
-      const passwordRegex = new RegExp(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[~!@#$%^&*()_+{}|\\"',./<>?[\]:;`=-])[A-Za-z\d~!@#$%^&*()_+{}|\\"',./<>?[\]:;`=-]{8,}$/,
-        'gm'
-      )
-      const isValidPassword = passwordRegex.test(this.password)
+      if (isLoginMode && (this.username === '' || this.password === '')) {
+        this.formIsValid = false
+        this.formInvalidMessage = 'Invalid Username or Password!'
+        return
+      }
 
-      if (this.mode === 'login') {
-        if (this.username === '' || this.password === '') {
-          this.formIsValid = false
-          this.formInvalidMessage = 'Invalid Username or Password!'
-          return
-        }
-      } else if (this.mode === 'signup') {
-        if (!isUsernameValid) {
-          this.formIsValid = false
-          this.formInvalidMessage = 'Username must be at least 5 characters!'
-          return
-        }
-        if (!isValidEmail) {
-          this.formIsValid = false
-          this.formInvalidMessage = 'Invalid Email!'
-          return
-        }
-        if (!isValidPassword) {
-          this.formIsValid = false
-          this.formInvalidMessage =
-            'Password must be 8 characters long with at least one uppercase, one lowercase, one number and one special character.'
-          return
-        } else if (this.password !== this.repassword) {
-          this.formIsValid = false
-          this.formInvalidMessage = 'Passwords do not match!'
-          return
-        }
-      } else if (this.mode === 'forgotPass') {
-        if (!isValidEmail) {
-          this.formIsValid = false
-          this.formInvalidMessage = 'Invalid Email!'
-          return
-        }
+      if (isSignupMode && !this.isUsernameValid) {
+        this.formIsValid = false
+        this.formInvalidMessage = 'Username must be at least 5 characters!'
+        return
+      }
+
+      if ((isSignupMode || isForgotPassMode) && !this.isValidEmail) {
+        this.formIsValid = false
+        this.formInvalidMessage = 'Invalid Email!'
+        return
+      }
+
+      if (isSignupMode && !this.isValidPassword) {
+        this.formIsValid = false
+        this.formInvalidMessage =
+          'Password must be 8 characters long with at least one uppercase, one lowercase, one number and one special character.'
+        return
+      }
+
+      if (isSignupMode && this.password !== this.repassword) {
+        this.formIsValid = false
+        this.formInvalidMessage = 'Passwords do not match!'
+        return
       }
 
       this.isLoading = true
@@ -136,7 +131,7 @@ export default {
       }
 
       try {
-        if (this.mode === 'login') {
+        if (isLoginMode) {
           await this.appStore.login(actionPayload)
           const redirectUrl = '/' + (this.$route.query.redirect || '')
           this.$router.replace(redirectUrl)
@@ -158,11 +153,7 @@ export default {
       this.repassword = ''
     },
     switchAuthMode() {
-      if (this.mode === 'login') {
-        this.mode = 'signup'
-      } else {
-        this.mode = 'login'
-      }
+      this.mode = this.mode === 'login' ? 'signup' : 'login'
     },
     handleError() {
       this.error = null

@@ -13,23 +13,17 @@ export const useAppStore = defineStore('app', () => {
   const didDeauth = ref(false)
   const didExpire = ref(false)
   const isAuthenticated = computed(() => !!token.value && !didExpire.value)
+
   async function login(payload) {
     try {
-      // Axios POST /login {username, email, password}
-      const res = await axios.post(
-        'https://localhost:4000/login',
-        {
-          username: payload.username,
-          password: payload.password
-        },
-        { withCredentials: true }
-      )
+      const res = await axios.post('https://localhost:4000/login', payload, {
+        withCredentials: true
+      })
 
-      if (res.status != 200) {
+      if (res.status !== 200) {
         throw new Error()
       }
 
-      // Decode jwt payload
       const accessToken = res.data.accessToken
       const decoded = VueJwtDecode.decode(accessToken)
       const jwtid = decoded.id
@@ -37,29 +31,14 @@ export const useAppStore = defineStore('app', () => {
       const jwtrole = decoded.role
       const jwtexpiration = decoded.exp * 1000
 
-      // // Fetch user details
-      // const userRes = await axios.get('https://localhost:4000/users/' + id, {
-      //   headers: {
-      //     Authorization: `Bearer ${accessToken}`
-      //   },
-      //   withCredentials: true
-      // })
-
-      // const email = userRes.data.email
-      // const balance = userRes.data.balance
-      // console.log(userRes)
-
-      // Store session details in local storage
       localStorage.setItem('token', accessToken)
       localStorage.setItem('userId', jwtid)
       localStorage.setItem('username', jwtusername)
       localStorage.setItem('tokenExpiration', jwtexpiration)
 
-      // Set deauth timer
       const expiresIn = +jwtexpiration - new Date().getTime()
       timer = setTimeout(deauth, expiresIn)
 
-      // Update state with session details
       didDeauth.value = false
       didExpire.value = false
       userId.value = jwtid
@@ -71,50 +50,42 @@ export const useAppStore = defineStore('app', () => {
       throw error
     }
   }
+
   async function signup(payload) {
     try {
-      // Axios POST /login {username, email, password}
-      const res = await axios.post(
-        'https://localhost:4000/signup',
-        {
-          username: payload.username,
-          email: payload.email,
-          password: payload.password
-        },
-        { withCredentials: true }
-      )
+      const res = await axios.post('https://localhost:4000/signup', payload, {
+        withCredentials: true
+      })
 
-      if (res.status != 200) {
+      if (res.status !== 200) {
         throw new Error()
       }
     } catch (err) {
-      console.log(err)
       const error = new Error(
         err.response.data.message || 'Failed to authenticate. Check your login data.'
       )
       throw error
     }
   }
+
   async function logout() {
-    // Remove session details from local storage
     localStorage.removeItem('token')
     localStorage.removeItem('userId')
     localStorage.removeItem('username')
     localStorage.removeItem('tokenExpiration')
 
-    // Clear deauth timer
     clearTimeout(timer)
 
-    // Revert state
     token.value = null
     userId.value = null
 
-    const res = await axios.get('https://localhost:4000/logout', { withCredentials: true })
+    await axios.get('https://localhost:4000/logout', { withCredentials: true })
   }
+
   async function reauth() {
     return new Promise((resolve, reject) => {
       clearTimeout(timer)
-      // Attempt to reauth with refresh token
+
       axios
         .get('https://localhost:4000/refresh', { withCredentials: true })
         .then((res) => {
@@ -125,39 +96,47 @@ export const useAppStore = defineStore('app', () => {
           const jwtrole = decoded.role
           const jwtexpiration = decoded.exp * 1000
 
-          // Store session details in local storage
           localStorage.setItem('token', accessToken)
           localStorage.setItem('userId', jwtid)
           localStorage.setItem('username', jwtusername)
           localStorage.setItem('tokenExpiration', jwtexpiration)
 
-          // Set deauth timer
           const expiresIn = +jwtexpiration - new Date().getTime()
           timer = setTimeout(deauth, expiresIn)
 
-          // Update state with session details
           didDeauth.value = false
           didExpire.value = false
           userId.value = jwtid
           username.value = jwtusername
           role.value = jwtrole
           token.value = accessToken
-          console.log('Reauthed!', userId.value, role.value)
+
           resolve()
         })
         .catch((error) => {
-          console.log('Reauth Failed :(', error)
           didExpire.value = true
           logout()
           reject()
         })
     })
   }
+
   function deauth() {
     didDeauth.value = true
-    console.log('Attempting to Reauth...')
     reauth()
   }
 
-  return { userId, username, token, role, didDeauth, isAuthenticated, login, signup, logout, reauth, deauth }
+  return {
+    userId,
+    username,
+    token,
+    role,
+    didDeauth,
+    isAuthenticated,
+    login,
+    signup,
+    logout,
+    reauth,
+    deauth
+  }
 })

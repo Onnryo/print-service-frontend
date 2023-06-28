@@ -6,7 +6,7 @@
         <input v-model="filterText" type="text" placeholder="Search by title" class="filter-input">
         <select v-model="filterStatus" class="status-dropdown">
           <option value="">All</option>
-          <option v-for="statusOption in partStore.status" :value="statusOption">{{ statusOption }}</option>
+          <option v-for="statusOption in statusOptions" :value="statusOption">{{ statusOption }}</option>
         </select>
         <!-- Add more filter inputs for other properties as needed -->
       </div>
@@ -20,7 +20,7 @@
             </div>
             <p class="part-notes">{{ truncateText(part.notes, 100) }}</p>
             <div class="part-details">
-              <p><span class="label">Estimated Cost:</span> ${{ (part.cost * part.quantity).toFixed(2) }}</p>
+              <p><span class="label">Estimated Cost:</span> ${{ calculateEstimatedCost(part) }}</p>
               <p><span class="label">Estimated Time:</span> {{ part.eta }}</p>
             </div>
           </div>
@@ -48,21 +48,16 @@ export default {
   },
   created() {
     this.isLoading = true
-    this.partStore.fetchParts()
-      .then(() => {
-        this.errorMessage = ''
-        this.isLoading = false
-      })
-      .catch((error) => {
-        this.errorMessage = !error || error === '' ? new Error('Failed to fetch parts') : error;
-        this.isLoading = false
-      })
+    this.fetchPartData()
   },
   computed: {
     ...mapStores(useAppStore),
     ...mapStores(usePartStore),
     isAdmin() {
       return this.appStore.role === 'ADMIN'
+    },
+    statusOptions() {
+      return this.partStore.status
     },
     filteredParts() {
       const filterTextLower = this.filterText.toLowerCase();
@@ -91,6 +86,20 @@ export default {
     },
     showPartDetails(partId) {
       this.$router.push(`/parts/${partId}`);
+    },
+    calculateEstimatedCost(part) {
+      return (part.cost * part.quantity).toFixed(2);
+    },
+    fetchPartData() {
+      this.partStore.fetchParts()
+        .then(() => {
+          this.errorMessage = '';
+          this.isLoading = false;
+        })
+        .catch((error) => {
+          this.errorMessage = error || 'Failed to fetch parts';
+          this.isLoading = false;
+        });
     }
   }
 }

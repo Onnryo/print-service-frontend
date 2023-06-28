@@ -33,7 +33,7 @@ export const useRequestStore = defineStore('request', () => {
       }
 
       payload.requestId = res.data.id
-      fileStore.createfile(payload)
+      await fileStore.createFile(payload)
     } catch (err) {
       console.log(err)
       const error = new Error(err || 'Failed to submit request.')
@@ -41,39 +41,35 @@ export const useRequestStore = defineStore('request', () => {
     }
   }
 
-  async function removeRequest(payload) {}
+  async function removeRequest(payload) {
+    // Implement the logic to remove a request
+  }
 
-  function fetchRequests() {
-    requests.value = []
-    return new Promise(async (resolve, reject) => {
-      try {
-        const url =
-          appStore.role === 'ADMIN'
-            ? 'https://localhost:4000/requests'
-            : `https://localhost:4000/users/${appStore.userId}/requests`
+  async function fetchRequests() {
+    try {
+      const url =
+        appStore.role === 'ADMIN'
+          ? 'https://localhost:4000/requests'
+          : `https://localhost:4000/users/${appStore.userId}/requests`
 
-        const res = await axios.get(url, {
-          withCredentials: true,
-          headers: { Authorization: `Bearer ${appStore.token}` }
-        })
+      const res = await axios.get(url, {
+        withCredentials: true,
+        headers: { Authorization: `Bearer ${appStore.token}` }
+      })
 
-        if (res.status !== 200) {
-          throw new Error()
-        }
-
-        //console.log(res.data)
-
-        requests.value = res.data
-        requests.value.forEach((request) => {
-          request.comments = []
-          request.files = []
-        })
-        resolve() // Resolve the promise
-      } catch (err) {
-        console.log(err)
-        reject(new Error(err || 'Failed to fetch requests.')) // Reject the promise
+      if (res.status !== 200) {
+        throw new Error()
       }
-    })
+
+      requests.value = res.data
+      requests.value.forEach((request) => {
+        request.comments = []
+        request.files = []
+      })
+    } catch (err) {
+      console.log(err)
+      throw new Error(err || 'Failed to fetch requests.')
+    }
   }
 
   async function fetchComments(requestId) {
@@ -83,7 +79,7 @@ export const useRequestStore = defineStore('request', () => {
         headers: { Authorization: `Bearer ${appStore.token}` }
       })
 
-      if (res.status != 200) {
+      if (res.status !== 200) {
         throw new Error()
       }
 
@@ -100,7 +96,7 @@ export const useRequestStore = defineStore('request', () => {
         headers: { Authorization: `Bearer ${appStore.token}` }
       })
 
-      if (res.status != 200) {
+      if (res.status !== 200) {
         throw new Error()
       }
 
@@ -112,41 +108,36 @@ export const useRequestStore = defineStore('request', () => {
 
   async function requestById(requestId) {
     if (!requests.value.length) {
-      try {
-        await fetchRequests()
-      } catch (error) {
-        console.log(error)
-        throw error
-      }
+      await fetchRequests()
     }
 
-    const requestIndex = requests.value.findIndex((request) => request.id === Number(requestId))
+    const request = requests.value.find((request) => request.id === parseInt(requestId))
 
-    if (requestIndex !== -1) {
+    if (request) {
       try {
-        const comments = await fetchComments(requestId)
-        const files = await fetchFiles(requestId)
-        requests.value[requestIndex].comments = comments
-        requests.value[requestIndex].files = files
-        console.log(requests.value[requestIndex])
+        const [comments, files] = await Promise.all([
+          fetchComments(requestId),
+          fetchFiles(requestId)
+        ])
+        request.comments = comments
+        request.files = files
       } catch (error) {
         console.log(error)
         throw error
       }
 
-      return requests.value[requestIndex]
+      return request
     } else {
-      throw new Error('Unauthorized.')
+      throw new Error('Request not found.')
     }
   }
 
   async function createComment(payload) {
     payload.userId = appStore.userId
-    console.log(payload)
-    const requestIndex = requests.value.findIndex((request) => request.id === payload.requestId)
-    console.log(requestIndex)
-    if (requestIndex !== -1) {
-      requests.value[requestIndex].comments.push(payload)
+
+    const request = requests.value.find((request) => request.id === payload.requestId)
+
+    if (request) {
       try {
         const res = await axios.post(
           'https://localhost:4000/comments',
@@ -158,21 +149,30 @@ export const useRequestStore = defineStore('request', () => {
           { withCredentials: true, headers: { Authorization: `Bearer ${appStore.token}` } }
         )
 
-        if (res.status != 200) {
+        if (res.status !== 200) {
           throw new Error()
         }
 
-        console.log(res.data)
-        const commentIndex = requests.value[requestIndex].comments.findIndex(
-          (comment) => comment.text === payload.text
-        )
-        requests.value[requestIndex].comments[commentIndex] = res.data
+        const comment = res.data
+        request.comments.push(comment)
       } catch (err) {
         console.log(err)
         const error = new Error(err || 'Failed to submit comment.')
         throw error
       }
     }
+  }
+
+  function filteredRequests(filterText, filterStatus) {
+    const filterTextLower = filterText.toLowerCase()
+    const filterStatusLower = filterStatus.toLowerCase()
+
+    return requests.value.filter((request) => {
+      const titleMatch = !filterText || request.title.toLowerCase().includes(filterTextLower)
+      const statusMatch = !filterStatus || request.status.toLowerCase() === filterStatusLower
+
+      return titleMatch && statusMatch
+    })
   }
 
   return {
@@ -183,6 +183,7 @@ export const useRequestStore = defineStore('request', () => {
     removeRequest,
     fetchRequests,
     requestById,
-    createComment
+    createComment,
+    filteredRequests
   }
 })

@@ -1,20 +1,31 @@
 <template>
   <base-card>
-    <h1 v-if="!isAdmin">My Requests</h1>
-    <h1 v-else>User Requests</h1>
+    <h1>{{ isAdmin ? 'User Requests' : 'My Requests' }}</h1>
     <section>
       <div class="filters">
-        <input v-model="filterText" type="text" placeholder="Search by title" class="filter-input">
+        <input
+          v-model="filterText"
+          type="text"
+          placeholder="Search by title"
+          class="filter-input"
+        />
         <select v-model="filterStatus" class="status-dropdown">
           <option value="">All</option>
-          <option v-for="statusOption in requestStore.status" :value="statusOption">{{ statusOption }}</option>
+          <option v-for="statusOption in statusOptions" :value="statusOption">
+            {{ statusOption }}
+          </option>
         </select>
         <!-- Add more filter inputs for other properties as needed -->
       </div>
       <base-spinner v-if="isLoading"></base-spinner>
       <div v-else>
         <div class="request-list" v-if="filteredRequests.length">
-          <div class="request-card" v-for="request in filteredRequests" :key="request.id" @click="showRequestDetails(request.id)">
+          <div
+            class="request-card"
+            v-for="request in filteredRequests"
+            :key="request.id"
+            @click="showRequestDetails(request.id)"
+          >
             <div class="request-header">
               <h2 class="request-title">{{ request.title }}</h2>
               <p class="request-status">{{ request.status }}</p>
@@ -42,24 +53,17 @@ export default {
   data() {
     return {
       isLoading: false,
-      errorMessage: '',
       filterText: '',
       filterStatus: ''
       // Add more filter properties for other properties as needed
     }
   },
   created() {
-    this.isLoading = true
+    this.isLoading = true;
     this.requestStore.fetchRequests()
-      .then(() => {
-        this.errorMessage = ''
-        this.isLoading = false
-      })
-      .catch((error) => {
-        this.errorMessage = !error || error === '' ? new Error('Failed to fetch requests') : error;
-        this.isLoading = false
-        console.log(!this.filteredRequests.length)
-      })
+      .finally(() => {
+        this.isLoading = false;
+      });
   },
   computed: {
     ...mapStores(useAppStore),
@@ -67,33 +71,26 @@ export default {
     isAdmin() {
       return this.appStore.role === 'ADMIN'
     },
+    statusOptions() {
+      return this.requestStore.status;
+    },
     filteredRequests() {
-      const filterTextLower = this.filterText.toLowerCase();
-      const filterStatusLower = this.filterStatus.toLowerCase();
-      // Add more filter properties for other properties as needed
-
-      return this.requestStore.requests.filter((request) => {
-        const titleMatch = !this.filterText || request.title.toLowerCase().includes(filterTextLower);
-        const statusMatch = !this.filterStatus || request.status.toLowerCase() === filterStatusLower;
-        // Add more filter conditions for other properties as needed
-
-        return titleMatch && statusMatch; // Add more filter conditions as needed
-      });
+      return this.requestStore.filteredRequests(this.filterText, this.filterStatus);
     },
     messageContents() {
-      return this.errorMessage ? this.errorMessage : 'You have not submitted any requests!'
+      return this.requestStore.error ? this.requestStore.error : 'You have not submitted any requests!';
     }
   },
   methods: {
     truncateText(text, length) {
       if (text.length <= length) {
-        return text;
+        return text
       } else {
-        return text.substr(0, length) + '...';
+        return text.substr(0, length) + '...'
       }
     },
     showRequestDetails(requestId) {
-      this.$router.push(`/requests/${requestId}`);
+      this.$router.push(`/requests/${requestId}`)
     }
   }
 }

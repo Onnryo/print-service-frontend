@@ -1,5 +1,8 @@
 <template>
   <base-card>
+    <template v-slot:title>
+      <h2 class="card-title-text">Request Details</h2>
+    </template>
     <div class="request-details" v-if="request">
       <!-- Request Header -->
       <div class="request-header">
@@ -19,8 +22,6 @@
           <p class="request-property">Estimated Time:</p>
           <p class="request-value">{{ request.estimated_time }}</p>
         </div>
-      </div>
-      <div class="request-metadata">
         <div class="request-metadata-group">
           <p class="request-property">Status:</p>
           <p class="request-value">{{ request.status }}</p>
@@ -29,8 +30,6 @@
           <p class="request-property">Status History:</p>
           <p class="request-value">{{ request.status_history }}</p>
         </div>
-      </div>
-      <div class="request-metadata">
         <div class="request-metadata-group">
           <p class="request-property">Created At:</p>
           <p class="request-value">{{ request.createdAt }}</p>
@@ -51,6 +50,7 @@
         <a :href="request.link" target="_blank">{{ request.link }}</a>
       </p>
 
+      <!-- File Buttons -->
       <div class="file-buttons">
         <base-button
           v-for="file in request.files"
@@ -64,7 +64,7 @@
       <hr class="request-divider" />
 
       <!-- Comments -->
-      <p v-if="!request.comments.length">No Comments...</p>
+      <p v-if="!request.comments.length" class="no-comments">No Comments...</p>
       <div v-else class="request-comment-list" ref="commentList">
         <p
           v-for="(comment, index) in request.comments"
@@ -119,7 +119,6 @@ export default {
         this.request = req
         this.errorMessage = ''
         this.isLoading = false
-        console.log(this.request)
       })
       .catch((error) => {
         this.errorMessage = !error || error === '' ? new Error('Failed to fetch request') : error
@@ -166,7 +165,6 @@ export default {
           }
         })
         .then((response) => {
-          console.log(123, response)
           const blob = new Blob([response.data])
           const link = document.createElement('a')
           const contentDisposition = response.headers['content-disposition']
@@ -184,8 +182,6 @@ export default {
     },
     submitComment() {
       if (this.commentMessage) {
-        console.log(this.commentMessage)
-
         // Create new comment
         const payload = {
           text: this.commentMessage,
@@ -202,7 +198,6 @@ export default {
       return comment.id !== null ? comment.id : `temp-${index}`
     },
     getCommentBackgroundColor(comment) {
-      console.log(comment.userId)
       if (!comment) return 'lightgrey'
       if (comment.userId === this.appStore.userId) {
         return 'lightblue'
@@ -270,21 +265,20 @@ h1 {
 }
 
 .request-metadata {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
   margin-bottom: 10px;
 }
 
 .request-metadata-group {
   display: flex;
-  width: 15em;
-  flex-direction: column; /* Updated: Change flex-direction to column */
+  flex-direction: column;
 }
 
 .request-property {
   font-weight: bold;
   margin-right: 5px;
-  align-self: flex-start;
 }
 
 .request-value {
@@ -382,6 +376,10 @@ h1 {
 .comment-received {
   background-color: #e5e5ea;
   align-self: flex-start;
+}
+
+.no-comments {
+  color: #888;
 }
 
 /* Add more styles as needed */
