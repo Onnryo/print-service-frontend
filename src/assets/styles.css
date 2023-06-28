@@ -1,0 +1,96 @@
+/* Global Styles */
+
+h1 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    text-align: center;
+  }
+  
+  hr {
+    display: block;
+    height: 1px;
+    margin: 1.5em 0;
+    border: 0;
+    background-color: #e4e4e4;
+  }
+  
+  .hide {
+    display: none;
+  }
+  
+  /* Part Details and List Styles */
+  
+  .part-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 20px;
+  }
+  
+  .part-divider,
+  .part-card {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    transition: transform 0.3s;
+  }
+  
+  .part-card:hover {
+    transform: scale(1.02);
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  .part-title {
+    font-size: 20px;
+    font-weight: bold;
+  }
+  
+  .part-status {
+    font-weight: bold;
+    color: #888;
+  }
+  
+  /* Part Metadata Styles */
+  
+  .part-metadata,
+  .part-details {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  
+  .part-metadata-group {
+    display: flex;
+    width: 15em;
+    flex-direction: column;
+  }
+  
+  .part-property {
+    font-weight: bold;
+    margin-right: 5px;
+    align-self: flex-start;
+  }
+  
+  .part-value {
+    color: #333;
+  }
+  
+  .part-notes {
+    margin-bottom: 10px;
+  }
+  
+  /* Form Styles */
+  
+  .formkit-form {
+    padding: 1.5em;
+    border: 1px solid #e4e4e4;
+    border-radius: 1em;
+    margin: 1em 1em 1em 1em;
+  }
+  
+  .formkit-input {
+    border: 1px solid #e4e4e4;
+    padding: 0.5em;
+    margin: 0.5em 0;
+  }

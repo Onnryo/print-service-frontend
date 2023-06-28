@@ -3,7 +3,7 @@
     <base-dialog :show="!!error" title="An error occurred" @close="handleError">
       <p>{{ error }}</p>
     </base-dialog>
-    <base-dialog :show="isLoading" title="Authenticating..." fixed>
+    <base-dialog :show="isLoading" title="Submitting..." fixed>
       <base-spinner></base-spinner>
     </base-dialog>
     <FormKit
@@ -95,7 +95,7 @@ export default {
       try {
           await this.requestStore.createRequest(actionPayload)
           const redirectUrl = '/' + (this.$route.query.redirect || '')
-          //this.$router.replace(redirectUrl)
+          this.$router.replace(redirectUrl)
       } catch (err) {
         this.error = err.message || 'Failed to submit request.'
       }
@@ -124,7 +124,7 @@ hr {
   padding: 1.5em;
   border: 1px solid #e4e4e4;
   border-radius: 1em;
-  margin: 1em 1em 1em 1em;
+  margin: 1em;
 }
 .hide {
   display: none;

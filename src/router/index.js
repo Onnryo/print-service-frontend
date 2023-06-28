@@ -5,6 +5,7 @@ import RequestListView from '../views/RequestListView.vue'
 import RequestDetailView from '../views/RequestDetailView.vue'
 import RequestSubmissionView from '../views/RequestSubmissionView.vue'
 import RequestCommentView from '../views/RequestCommentView.vue'
+import PartBuilderView from '../views/PartBuilderView.vue'
 import PartListView from '../views/PartListView.vue'
 import PartDetailView from '../views/PartDetailView.vue'
 import BatchListView from '../views/BatchListView.vue'
@@ -22,25 +23,27 @@ No Auth:
     /auth
 
 User Auth:
-    /                       User Landing Page
+    /                       *User Landing Page
     /requests               All requests submitted by logged in user, filterable
     /requests/submission    Request Submission
     /requests/:id           Request Details if request submitted by logged in user, comments, files, parts display
-    /user/:id               User Details / settings
+    /users/:id               *User Details / settings
 
 Admin Auth:
-    /                       Admin Landing Page
+    /                       *Admin Landing Page
     /requests               All Requests, filterable, defaults to only pending and in progress requests
     /requests/:id           ""
-    /user/:id               Admin settings / Other user details
-    /requests/comments      All comments, filterable, read/unread, links to relevant entity
-    /parts                  All parts, filterable
-    /parts/:id              Part Details, comments, files
-    /batch                  All batches, filterable
-    /batch/:id              Batch details, comments, parts, files, requests display
-    /batch/builder          Batch builder, effeciently combine parts from multiples requests based on size, filament, print settings, etc
-    /file                   All files, filterable, unassigned
-    /file/:id               File Details, Part Creator
+    /users                  *All users, filterable
+    /users/:id              *Admin settings / Other user details
+    /requests/comments      **All comments, filterable, read/unread, links to relevant entity
+    /parts                  *All parts, filterable
+    /parts/:id              *Part Details, comments, files
+    /batch                  *All batches, filterable
+    /batch/:id              *Batch details, comments, parts, files, requests display
+    /batch/builder          *Batch builder, effeciently combine parts from multiples requests based on size, filament, print settings, etc
+    /files                  All files, filterable, unassigned
+    /files/:id              File Details, Part Creator
+    /files/:id/builder      Part Builder
  */
 
 const router = createRouter({
@@ -116,6 +119,12 @@ const router = createRouter({
       path: '/files/:id',
       name: 'fileDetails',
       component: FileDetailView,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+      path: '/files/:id/builder',
+      name: 'partBuilder',
+      component: PartBuilderView,
       meta: { requiresAuth: true, requiresAdmin: true }
     },
     {

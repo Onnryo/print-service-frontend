@@ -1,15 +1,19 @@
 <template>
   <base-card>
     <div class="file-details" v-if="file">
-      <!-- file Header -->
+      <!-- File Header -->
       <div class="file-header">
         <h1>{{ file.name }}</h1>
-        <p class="file-request-id">{{ file.requestId }}</p>
+        <div class="file-header-button-list">
+          <base-button @click="showRequest">Request</base-button>
+          <base-button @click="createPart">Create Part</base-button>
+          <base-button @click="downloadFile">Download</base-button>
+        </div>
       </div>
 
       <hr class="file-divider" />
 
-      <!-- file Metadata -->
+      <!-- File Metadata -->
       <div class="file-metadata">
         <div class="file-metadata-group">
           <p class="file-property">Created At:</p>
@@ -20,17 +24,28 @@
           <p class="file-value">{{ file.updatedAt }}</p>
         </div>
       </div>
-
-      <hr class="file-divider" />
-
-      <div class="file-buttons">
-        <base-button
-          v-for="file in file.files"
-          :key="file.id"
-          @click="handleClick(file.id, $event)"
+      <div class="part-list" v-if="file.parts.length">
+        <hr class="file-divider" />
+        <p class="file-property">Parts:</p>
+        <div
+          class="part-card"
+          v-for="part in file.parts"
+          :key="part.id"
+          @click="showPartDetails(part.id)"
         >
-          {{ file.name }}
-        </base-button>
+          <div class="part-header">
+            <h2 class="part-title">{{ part.title }}</h2>
+            <p class="part-status">{{ part.status }}</p>
+          </div>
+          <p class="part-notes">{{ truncateText(part.notes, 100) }}</p>
+          <div class="part-details">
+            <p>
+              <span class="label">Estimated Cost:</span>
+              ${{ (part.cost * part.quantity).toFixed(2) }}
+            </p>
+            <p><span class="label">Estimated Time:</span> {{ part.eta }}</p>
+          </div>
+        </div>
       </div>
     </div>
   </base-card>
@@ -52,21 +67,17 @@ export default {
   },
   created() {
     // Fetch file data
-    console.log(1)
     this.isLoading = true
     this.fileStore
       .fileById(this.$route.params.id)
       .then((req) => {
-        console.log(2, req)
         this.file = req
         this.errorMessage = ''
         this.isLoading = false
-        console.log(this.file)
       })
       .catch((error) => {
         this.errorMessage = !error || error === '' ? new Error('Failed to fetch file') : error
         this.isLoading = false
-        console.log(this.errorMessage)
       })
   },
   computed: {
@@ -77,9 +88,15 @@ export default {
     }
   },
   methods: {
-    downloadFile(fileId) {
+    showRequest() {
+      this.$router.push('/requests/' + this.file.requestId)
+    },
+    createPart() {
+      this.$router.push('/files/' + this.file.id + '/builder')
+    },
+    downloadFile() {
       axios
-        .get(`https://localhost:4000/files/${fileId}/download`, {
+        .get(`https://localhost:4000/files/${this.file.id}/download`, {
           responseType: 'blob', // Set the response type to 'blob' for file download
           withCredentials: true,
           headers: {
@@ -87,7 +104,6 @@ export default {
           }
         })
         .then((response) => {
-          console.log(123, response)
           const blob = new Blob([response.data])
           const link = document.createElement('a')
           const contentDisposition = response.headers['content-disposition']
@@ -103,6 +119,16 @@ export default {
           // Handle the error if necessary
         })
     },
+    truncateText(text, length) {
+      if (text.length <= length) {
+        return text
+      } else {
+        return text.substr(0, length) + '...'
+      }
+    },
+    showPartDetails(requestId) {
+      this.$router.push(`/parts/${requestId}`)
+    }
   }
 }
 </script>
@@ -115,22 +141,17 @@ h1 {
   text-align: center;
 }
 
-.file-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.file-buttons > base-button {
-  padding: 8px 16px;
-}
-
 .file-header {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   margin-bottom: 20px;
+}
+
+.file-header-button-list {
+  display: flex;
+  gap: 5px;
+  margin-top: 10px;
 }
 
 .file-details {
@@ -142,19 +163,6 @@ h1 {
   font-size: 14px;
 }
 
-.file-body {
-  margin-bottom: 10px;
-  white-space: pre-wrap;
-}
-
-.file-link {
-  margin-bottom: 10px;
-}
-
-.file-link a {
-  color: #0366d6;
-}
-
 .file-metadata {
   display: flex;
   justify-content: space-between;
@@ -164,7 +172,7 @@ h1 {
 .file-metadata-group {
   display: flex;
   width: 15em;
-  flex-direction: column; /* Updated: Change flex-direction to column */
+  flex-direction: column;
 }
 
 .file-property {
@@ -177,98 +185,57 @@ h1 {
   color: #333;
 }
 
-.base-spinner {
-  margin: 20px auto;
-  text-align: center;
-}
-
 .file-divider {
   margin-top: 20px;
   margin-bottom: 20px;
   border: 1px solid #ccc;
 }
 
-.comment-form {
+.part-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  padding: 0;
+}
+
+.part-card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  transition: transform 0.3s;
+}
+
+.part-card:hover {
+  transform: scale(1.02);
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.part-header {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 20px;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
 }
 
-.comment-input {
-  flex-grow: 1;
-  /* Apply the desired styling for the input field */
-  /* For example: */
-  border: 1px solid #e4e4e4;
-  padding: 0.5em;
-  margin-right: 10px;
-  border-radius: 25px;
+.part-title {
+  font-size: 20px;
+  font-weight: bold;
 }
 
-.comment-submit {
-  /* Apply the desired styling for the submit button */
-  /* For example: */
-  border: none;
-  background-color: #0366d6;
-  color: white;
-  padding: 0.5em 1em;
-  border-radius: 25px;
-  cursor: pointer;
+.part-status {
+  font-weight: bold;
+  color: #888;
 }
 
-.file-comment-list {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 0 1em; /* Adjust padding as needed */
-  overflow-y: auto;
-  max-height: 300px; /* Adjust the max-height as needed */
-
-  /* Media queries for scaling in portrait and landscape orientations */
-  @media (orientation: portrait) {
-    margin: 1em 0; /* Adjust margin as needed */
-  }
-
-  @media (orientation: landscape) {
-    margin: 1em 10%; /* Adjust margin as needed */
-  }
-
-  /* Custom scrollbar styles */
-  scrollbar-color: #ccc #f5f5f5; /* Adjust the colors as needed */
-  scrollbar-width: thin;
-
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background-color: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background-color: #ccc;
-    border-radius: 4px;
-  }
+.part-notes {
+  margin-bottom: 10px;
 }
 
-.file-comment {
-  display: inline-block;
-  padding: 8px 16px;
-  margin: 8px;
-  border-radius: 20px;
-  max-width: 70%;
+.part-details {
+  margin-bottom: 10px;
 }
 
-.comment-sent {
-  background-color: #248bf5;
-  color: white;
-  align-self: flex-end;
+.label {
+  font-weight: bold;
 }
-
-.comment-received {
-  background-color: #e5e5ea;
-  align-self: flex-start;
-}
-
-/* Add more styles as needed */
 </style>

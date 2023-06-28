@@ -11,29 +11,29 @@ export const useFileStore = defineStore('file', () => {
 
   async function createfile(payload) {
     try {
-        const fileFormData = new FormData()
+      const fileFormData = new FormData()
 
-        // Append each file to the FormData
-        payload.files.forEach((file) => {
-          console.log(file.file)
-          fileFormData.append(`files`, file.file)
-        })
-  
-        const res = await axios.post(
-          `https://localhost:4000/files/${payload.requestId}`,
-          fileFormData,
-          {
-            withCredentials: true,
-            headers: {
-              Authorization: `Bearer ${appStore.token}`,
-              'Content-Type': 'multipart/form-data' // Important: Set the content type to 'multipart/form-data'
-            }
+      // Append each file to the FormData
+      payload.files.forEach((file) => {
+        console.log(file.file)
+        fileFormData.append(`files`, file.file)
+      })
+
+      const res = await axios.post(
+        `https://localhost:4000/files/${payload.requestId}`,
+        fileFormData,
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${appStore.token}`,
+            'Content-Type': 'multipart/form-data' // Important: Set the content type to 'multipart/form-data'
           }
-        )
-  
-        if (uploadRes.status !== 200) {
-          throw new Error()
         }
+      )
+
+      if (res.status !== 200) {
+        throw new Error()
+      }
     } catch (err) {
       console.log(err)
       const error = new Error(err || 'Failed to submit file.')
@@ -48,7 +48,7 @@ export const useFileStore = defineStore('file', () => {
     return new Promise(async (resolve, reject) => {
       try {
         if (appStore.role !== 'ADMIN') {
-            reject(new Error('Unauthorized'))
+          reject(new Error('Unauthorized'))
         }
         const url = 'https://localhost:4000/files'
 
@@ -76,17 +76,19 @@ export const useFileStore = defineStore('file', () => {
 
   async function fetchParts(fileId) {
     try {
+      console.log(999)
       const res = await axios.get(`https://localhost:4000/files/${fileId}/parts`, {
         withCredentials: true,
         headers: { Authorization: `Bearer ${appStore.token}` }
       })
-
+      console.log(1000)
       if (res.status != 200) {
         throw new Error()
       }
 
       return res.data
     } catch (error) {
+      console.log(error)
       throw error
     }
   }
@@ -107,9 +109,10 @@ export const useFileStore = defineStore('file', () => {
 
     if (fileIndex !== -1) {
       try {
-        //const parts = await fetchParts(fileId)
-        //files.value[fileIndex].parts = parts
-        //console.log(files.value[parts])
+        const parts = await fetchParts(fileId)
+        console.log(parts)
+        files.value[fileIndex].parts = parts
+        console.log(files.value[fileIndex].parts)
       } catch (error) {
         console.log(error)
         throw error
@@ -127,6 +130,6 @@ export const useFileStore = defineStore('file', () => {
     createfile,
     removefile,
     fetchfiles,
-    fileById,
+    fileById
   }
 })

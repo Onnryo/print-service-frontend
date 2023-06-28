@@ -12,6 +12,15 @@ export default {
         messages: 'list-none p-0 mt-1 mb-0',
         message: 'text-red-500 mb-1 text-sm',
       },
+      number: {
+        outer: 'p-2 mb-2',
+        label: 'block mb-1 font-bold text-base',
+        inner: 'flex items-center border rounded-lg mb-1 focus-within:border-blue-500',
+        input: 'flex-1 h-10 px-3 border-gray-300 text-base text-gray-700 placeholder-gray-400',
+        help: 'text-sm text-gray-500',
+        messages: 'list-none p-0 mt-1 mb-0',
+        message: 'text-red-500 mb-1 text-sm',
+      },
       email: {
         outer: 'p-2 mb-2',
         label: 'block mb-1 font-bold text-base',
