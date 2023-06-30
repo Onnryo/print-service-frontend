@@ -23,7 +23,7 @@ No Auth:
     /auth
 
 User Auth:
-    /                       *User Landing Page
+    /                       *User Landing Page, comment notifications
     /requests               All requests submitted by logged in user, filterable
     /requests/submission    Request Submission
     /requests/:id           Request Details if request submitted by logged in user, comments, files, parts display
@@ -36,8 +36,8 @@ Admin Auth:
     /users                  *All users, filterable
     /users/:id              *Admin settings / Other user details
     /requests/comments      **All comments, filterable, read/unread, links to relevant entity
-    /parts                  *All parts, filterable
-    /parts/:id              *Part Details, comments, files
+    /parts                  All parts, filterable
+    /parts/:id              Part Details, comments, files
     /batch                  *All batches, filterable
     /batch/:id              *Batch details, comments, parts, files, requests display
     /batch/builder          *Batch builder, effeciently combine parts from multiples requests based on size, filament, print settings, etc
